@@ -1,5 +1,4 @@
-﻿from urllib import request
-import requests
+﻿import requests
 import os
 import json
 from aiogram import Bot, Dispatcher, executor, types
