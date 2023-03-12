@@ -62,6 +62,8 @@ class TrollFilter(Filter):
             return False
         if not current_user:
             return False
+        if current_user['name'] == 'Ilona':
+            requests.get(url + 'api/troll_ilona/', auth=HTTPBasicAuth(login, password))
         return True
 
 
