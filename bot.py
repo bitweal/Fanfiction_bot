@@ -1,6 +1,6 @@
 ﻿import requests
 import os
-import json
+import random
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.dispatcher import FSMContext
@@ -9,7 +9,9 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters import Text
 from tg_bot_key import get_tg_api_key, get_login_data, get_id
 from requests.auth import HTTPBasicAuth
+from aiogram.dispatcher.filters import Filter
 
+url = 'http://185.26.96.154/'
 
 login, password = get_login_data()
 bot = Bot(token=get_tg_api_key())
@@ -45,6 +47,36 @@ def dec_permission(func):
             print('Доступ запрещен')
             return False
     return user
+
+
+class TrollFilter(Filter):
+    key = "TrollFilter"
+
+    async def check(self, message: types.Message) -> bool:
+        current_user = None
+        users = requests.get(url + 'api/admins/', auth=HTTPBasicAuth(login, password)).json()
+        for user in users:
+            if user['telegram_id'] == str(message.from_user.id):
+                current_user = user
+        if not current_user or current_user['troll_mode'] == 'false':
+            return False
+        return True
+
+
+@dp.message_handler(TrollFilter(), state='*')
+@dec_permission
+async def cancel_handler(message: types.Message, state: FSMContext):
+    jokes = requests.get(
+        url + 'api/troll_admin/' + str(message.from_user.id) + '/',
+        auth=HTTPBasicAuth(login, password)
+    ).json()
+    try:
+        joke = random.choice(jokes)
+    except IndexError:
+        joke = dict()
+        joke['text'] = 'Не придумали шутки для этого юзера(((('
+    await state.finish()
+    await bot.send_message(message.from_user.id, joke['text'], reply_markup=kb_main)
 
 
 @dp.message_handler(Text(equals='Отмена', ignore_case=True), state='*')
