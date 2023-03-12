@@ -58,7 +58,9 @@ class TrollFilter(Filter):
         for user in users:
             if user['telegram_id'] == str(message.from_user.id):
                 current_user = user
-        if not current_user or current_user['troll_mode'] == 'false':
+        if current_user['troll_mode'] is False:
+            return False
+        if not current_user:
             return False
         return True
 
